@@ -84,6 +84,7 @@ interface AuthStore {
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
   checkAdmin: () => Promise<void>
+  isAuthenticated: () => boolean
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -110,7 +111,8 @@ export const useAuthStore = create<AuthStore>()(
           .eq('id', user.id)
           .single()
         set({ isAdmin: !!data, user })
-      }
+      },
+      isAuthenticated: () => get().user !== null
     }),
     { name: 'auth-store' }
   )

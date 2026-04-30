@@ -7,10 +7,9 @@ import { useState } from 'react'
 
 interface PropertyCardProps {
   property: Property;
-  showCompare?: boolean;
 }
 
-export const PropertyCard = ({ property, showCompare }: PropertyCardProps) => {
+export const PropertyCard = ({ property }: PropertyCardProps) => {
   const { isFavorite, addFavorite, removeFavorite } = useStore()
   const favorite = isFavorite(property.id)
   const [copied, setCopied] = useState(false)

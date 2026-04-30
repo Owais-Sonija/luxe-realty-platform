@@ -3,7 +3,6 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { Property } from '../types'
 import { formatPrice } from '../utils/format'
-import { Link } from 'react-router-dom'
 
 delete (L.Icon.Default.prototype as any)._getIconUrl
 L.Icon.Default.mergeOptions({

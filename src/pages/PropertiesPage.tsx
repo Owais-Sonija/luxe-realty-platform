@@ -2,14 +2,12 @@ import { useState, useEffect } from 'react'
 import { LayoutGrid, List, Map as MapIcon, SlidersHorizontal, X } from 'lucide-react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { useStore } from '../store'
 import { PropertyCard } from '../components/PropertyCard'
 import { PropertyMap } from '../components/PropertyMap'
 import { PROPERTY_FEATURES } from '../types'
 import type { Property } from '../types'
 
 export const PropertiesPage = () => {
-  const { filters } = useStore()
   const [localFilters, setLocalFilters] = useState({
     listing_type: 'all',
     property_type: 'all',
@@ -25,10 +23,9 @@ export const PropertiesPage = () => {
   const [showFilters, setShowFilters] = useState(false)
   const [properties, setProperties] = useState<Property[]>([])
   const [totalCount, setTotalCount] = useState(0)
-  const [loading, setLoading] = useState(true)
   const [searchParams] = useSearchParams()
   const [sortBy, setSortBy] = useState('default')
-  const [page, setPage] = useState(1)
+  const [page] = useState(1)
   const navigate = useNavigate()
 
   const handleClearAll = () => {
@@ -68,7 +65,6 @@ export const PropertiesPage = () => {
   }
 
   const fetchWithFilters = async (filters: typeof localFilters) => {
-    setLoading(true)
     try {
       let query_builder = supabase
         .from('properties')
@@ -134,7 +130,9 @@ export const PropertiesPage = () => {
       const { data, error, count } = await query_builder
 
       if (error) {
-        console.error('Error:', error)
+        if (import.meta.env.DEV) {
+          console.error('Error:', error)
+        }
         setProperties([])
         setTotalCount(0)
         return
@@ -143,9 +141,9 @@ export const PropertiesPage = () => {
       setProperties(data ?? [])
       setTotalCount(count ?? 0)
     } catch (err) {
-      console.error('Catch error:', err)
-    } finally {
-      setLoading(false)
+      if (import.meta.env.DEV) {
+        console.error('Catch error:', err)
+      }
     }
   }
 

@@ -1,16 +1,29 @@
 import { useState, useEffect } from 'react'
-import { Plus, Edit, Trash2, Star, Eye } from 'lucide-react'
-import { formatPrice, getStatusColor, getTypeColor } from '../../utils/format'
+import { Plus, Star } from 'lucide-react'
+import { formatPrice, getTypeColor } from '../../utils/format'
 import { supabase } from '../../lib/supabase'
+import { useNavigate } from 'react-router-dom'
+import { useAuthStore } from '../../store'
 
 export const AdminProperties = () => {
   const [properties, setProperties] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
   const [adminSearch, setAdminSearch] = useState('')
   const [editingProperty, setEditingProperty] = useState<any>(null)
+  const { isAdmin, isAuthenticated } = useAuthStore()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate('/admin/login')
+      return
+    }
+    if (!isAdmin) {
+      navigate('/admin/login')
+      return
+    }
+  }, [isAuthenticated, isAdmin, navigate])
 
   const fetchProperties = async () => {
-    setLoading(true)
     try {
       const { data, error } = await supabase
         .from('properties')
@@ -20,9 +33,9 @@ export const AdminProperties = () => {
       if (error) throw error
       setProperties(data ?? [])
     } catch (err) {
-      console.error('Properties error:', err)
-    } finally {
-      setLoading(false)
+      if (import.meta.env.DEV) {
+        console.error('Properties error:', err)
+      }
     }
   }
 

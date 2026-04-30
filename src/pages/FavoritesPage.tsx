@@ -25,7 +25,9 @@ export const FavoritesPage = () => {
         .in('id', favorites)
       
       if (error) {
-        console.error('Favorites error:', error)
+        if (import.meta.env.DEV) {
+          console.error('Favorites error:', error)
+        }
         setLoading(false)
         return
       }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { MapPin, BedDouble, Bath, Square, Calendar, Heart, Share2, Check } from 'lucide-react'
+import { MapPin, BedDouble, Bath, Square, Calendar, Heart, Check } from 'lucide-react'
 import { PropertyMap } from '../components/PropertyMap'
 import { MortgageCalculator } from '../components/MortgageCalculator'
 import { formatPrice, getTypeColor } from '../utils/format'
@@ -73,7 +73,9 @@ export const PropertyDetailPage = () => {
       
       setTimeout(() => setSubmitSuccess(false), 5000)
     } catch (err) {
-      console.error('Inquiry error:', err)
+      if (import.meta.env.DEV) {
+        console.error('Inquiry error:', err)
+      }
       setSubmitError('Failed to send message. Please try again.')
     } finally {
       setSubmitting(false)

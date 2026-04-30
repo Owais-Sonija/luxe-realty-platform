@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Phone, Mail, Award, CheckCircle2 } from 'lucide-react'
+import { Award, CheckCircle2 } from 'lucide-react'
 import type { Agent } from '../types'
 import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'

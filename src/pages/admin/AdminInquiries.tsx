@@ -1,13 +1,25 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
-
+import { useNavigate } from 'react-router-dom'
+import { useAuthStore } from '../../store'
 export const AdminInquiries = () => {
   const [statusFilter, setStatusFilter] = useState('all')
   const [inquiries, setInquiries] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const { isAdmin, isAuthenticated } = useAuthStore()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate('/admin/login')
+      return
+    }
+    if (!isAdmin) {
+      navigate('/admin/login')
+      return
+    }
+  }, [isAuthenticated, isAdmin, navigate])
 
   const fetchInquiries = async () => {
-    setLoading(true)
     try {
       let query = supabase
         .from('inquiries')
@@ -23,9 +35,9 @@ export const AdminInquiries = () => {
       if (error) throw error
       setInquiries(data ?? [])
     } catch (err) {
-      console.error('Inquiries error:', err)
-    } finally {
-      setLoading(false)
+      if (import.meta.env.DEV) {
+        console.error('Inquiries error:', err)
+      }
     }
   }
 

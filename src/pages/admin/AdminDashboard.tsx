@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Building2, MessageSquare } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { useAuthStore } from '../../store'
 
 export const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -10,11 +11,21 @@ export const AdminDashboard = () => {
   })
   const [newInquiries, setNewInquiries] = useState(0)
   const [recentInquiries, setRecentInquiries] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const { isAdmin, isAuthenticated } = useAuthStore()
+  const navigate = useNavigate()
 
   useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate('/admin/login')
+      return
+    }
+    if (!isAdmin) {
+      navigate('/admin/login')
+      return
+    }
+  }, [isAuthenticated, isAdmin, navigate])
+  useEffect(() => {
     const fetchStats = async () => {
-      setLoading(true)
       try {
         // Total properties count by status
         const { data: propStats } = await supabase
@@ -64,9 +75,9 @@ export const AdminDashboard = () => {
         setRecentInquiries(recentInq ?? [])
 
       } catch (err) {
-        console.error('Dashboard error:', err)
-      } finally {
-        setLoading(false)
+        if (import.meta.env.DEV) {
+          console.error('Dashboard error:', err)
+        }
       }
     }
     fetchStats()

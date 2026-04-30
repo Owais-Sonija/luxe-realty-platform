@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Search, MapPin } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { PROPERTY_FEATURES } from '../types'

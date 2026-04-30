@@ -1,10 +1,24 @@
 import { useState, useEffect } from 'react'
-import { Plus, Edit, Trash2 } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { useNavigate } from 'react-router-dom'
+import { useAuthStore } from '../../store'
 
 export const AdminAgents = () => {
   const [agents, setAgents] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const { isAdmin, isAuthenticated } = useAuthStore()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate('/admin/login')
+      return
+    }
+    if (!isAdmin) {
+      navigate('/admin/login')
+      return
+    }
+  }, [isAuthenticated, isAdmin, navigate])
 
   const [propertyCounts, setPropertyCounts] = useState<Record<string, number>>({})
 
@@ -21,7 +35,6 @@ export const AdminAgents = () => {
   }
 
   const fetchAgents = async () => {
-    setLoading(true)
     try {
       const { data, error } = await supabase
         .from('agents')
@@ -34,9 +47,9 @@ export const AdminAgents = () => {
         fetchPropertyCounts(data)
       }
     } catch (err) {
-      console.error('Agents error:', err)
-    } finally {
-      setLoading(false)
+      if (import.meta.env.DEV) {
+        console.error('Agents error:', err)
+      }
     }
   }
 
@@ -65,7 +78,9 @@ export const AdminAgents = () => {
     if (!error) {
       setAgents(prev => prev.filter(a => a.id !== id))
     } else {
-      console.error('Delete error:', error)
+      if (import.meta.env.DEV) {
+        console.error('Delete error:', error)
+      }
       alert('Failed to delete agent')
     }
   }
@@ -115,7 +130,9 @@ export const AdminAgents = () => {
       ))
       setEditingAgent(null)
     } else {
-      console.error('Update error:', error)
+      if (import.meta.env.DEV) {
+        console.error('Update error:', error)
+      }
       alert('Failed to update agent')
     }
   }
