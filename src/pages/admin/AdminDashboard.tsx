@@ -1,7 +1,83 @@
+import { useState, useEffect } from 'react'
 import { Building2, MessageSquare } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { supabase } from '../../lib/supabase'
 
 export const AdminDashboard = () => {
+  const [stats, setStats] = useState({
+    total: 0, forSale: 0, forRent: 0, 
+    active: 0, pending: 0, soldRented: 0
+  })
+  const [newInquiries, setNewInquiries] = useState(0)
+  const [recentInquiries, setRecentInquiries] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      setLoading(true)
+      try {
+        // Total properties count by status
+        const { data: propStats } = await supabase
+          .from('properties')
+          .select('status, listing_type')
+        
+        const total = propStats?.length ?? 0
+        const forSale = propStats?.filter(
+          p => p.listing_type === 'sale' && 
+          p.status === 'active'
+        ).length ?? 0
+        const forRent = propStats?.filter(
+          p => p.listing_type === 'rent' && 
+          p.status === 'active'
+        ).length ?? 0
+        const active = propStats?.filter(
+          p => p.status === 'active'
+        ).length ?? 0
+        const pending = propStats?.filter(
+          p => p.status === 'pending'
+        ).length ?? 0
+        const soldRented = propStats?.filter(
+          p => p.status === 'sold' || 
+          p.status === 'rented'
+        ).length ?? 0
+
+        setStats({ 
+          total, forSale, forRent, 
+          active, pending, soldRented 
+        })
+
+        // New inquiries count
+        const { count: inquiryCount } = await supabase
+          .from('inquiries')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'new')
+        
+        setNewInquiries(inquiryCount ?? 0)
+
+        // Recent inquiries (real data)
+        const { data: recentInq } = await supabase
+          .from('inquiries')
+          .select('*, properties(title)')
+          .order('created_at', { ascending: false })
+          .limit(5)
+        
+        setRecentInquiries(recentInq ?? [])
+
+      } catch (err) {
+        console.error('Dashboard error:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchStats()
+  }, [])
+
+  const activePercent = stats.total > 0 
+    ? Math.round(stats.active / stats.total * 100) : 0
+  const pendingPercent = stats.total > 0 
+    ? Math.round(stats.pending / stats.total * 100) : 0
+  const soldPercent = stats.total > 0 
+    ? Math.round(stats.soldRented / stats.total * 100) : 0
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
@@ -21,10 +97,10 @@ export const AdminDashboard = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {[
-          { label: 'Total Properties', value: '142', icon: Building2, color: 'text-blue-700', bg: 'bg-blue-50' },
-          { label: 'For Sale', value: '85', icon: Building2, color: 'text-emerald-700', bg: 'bg-emerald-50' },
-          { label: 'For Rent', value: '57', icon: Building2, color: 'text-amber-700', bg: 'bg-amber-50' },
-          { label: 'New Inquiries', value: '12', icon: MessageSquare, color: 'text-purple-700', bg: 'bg-purple-50' },
+          { label: 'Total Properties', value: stats.total, icon: Building2, color: 'text-blue-700', bg: 'bg-blue-50' },
+          { label: 'For Sale', value: stats.forSale, icon: Building2, color: 'text-emerald-700', bg: 'bg-emerald-50' },
+          { label: 'For Rent', value: stats.forRent, icon: Building2, color: 'text-amber-700', bg: 'bg-amber-50' },
+          { label: 'New Inquiries', value: newInquiries, icon: MessageSquare, color: 'text-purple-700', bg: 'bg-purple-50' },
         ].map(stat => (
           <div key={stat.label} className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
             <div className="flex items-center gap-4 mb-4">
@@ -55,12 +131,12 @@ export const AdminDashboard = () => {
                 </tr>
               </thead>
               <tbody className="text-sm">
-                {[1, 2, 3, 4, 5].map(i => (
-                  <tr key={i} className="border-b border-slate-50 last:border-0">
-                    <td className="py-3 font-medium text-slate-900">John Doe {i}</td>
-                    <td className="py-3 text-slate-600">Modern Villa in Malibu</td>
-                    <td className="py-3"><span className="bg-amber-100 text-amber-700 px-2 py-1 rounded text-xs font-semibold">New</span></td>
-                    <td className="py-3 text-slate-500">Today</td>
+                {recentInquiries.map(inq => (
+                  <tr key={inq.id} className="border-b border-slate-50 last:border-0">
+                    <td className="py-3 font-medium text-slate-900">{inq.name}</td>
+                    <td className="py-3 text-slate-600">{inq.properties?.title ?? 'General'}</td>
+                    <td className="py-3"><span className="bg-amber-100 text-amber-700 px-2 py-1 rounded text-xs font-semibold">{inq.status}</span></td>
+                    <td className="py-3 text-slate-500">{new Date(inq.created_at).toLocaleDateString()}</td>
                   </tr>
                 ))}
               </tbody>
@@ -74,28 +150,28 @@ export const AdminDashboard = () => {
             <div>
               <div className="flex justify-between text-sm mb-1">
                 <span className="text-slate-600 font-medium">Active</span>
-                <span className="text-slate-900 font-bold">60%</span>
+                <span className="text-slate-900 font-bold">{activePercent}%</span>
               </div>
               <div className="w-full bg-slate-100 rounded-full h-2">
-                <div className="bg-blue-600 h-2 rounded-full" style={{ width: '60%' }}></div>
+                <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${activePercent}%` }}></div>
               </div>
             </div>
             <div>
               <div className="flex justify-between text-sm mb-1">
                 <span className="text-slate-600 font-medium">Pending</span>
-                <span className="text-slate-900 font-bold">15%</span>
+                <span className="text-slate-900 font-bold">{pendingPercent}%</span>
               </div>
               <div className="w-full bg-slate-100 rounded-full h-2">
-                <div className="bg-amber-500 h-2 rounded-full" style={{ width: '15%' }}></div>
+                <div className="bg-amber-500 h-2 rounded-full" style={{ width: `${pendingPercent}%` }}></div>
               </div>
             </div>
             <div>
               <div className="flex justify-between text-sm mb-1">
                 <span className="text-slate-600 font-medium">Sold/Rented</span>
-                <span className="text-slate-900 font-bold">25%</span>
+                <span className="text-slate-900 font-bold">{soldPercent}%</span>
               </div>
               <div className="w-full bg-slate-100 rounded-full h-2">
-                <div className="bg-emerald-500 h-2 rounded-full" style={{ width: '25%' }}></div>
+                <div className="bg-emerald-500 h-2 rounded-full" style={{ width: `${soldPercent}%` }}></div>
               </div>
             </div>
           </div>
