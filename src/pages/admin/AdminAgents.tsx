@@ -4,6 +4,11 @@ import { supabase } from '../../lib/supabase'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store'
 
+const PROTECTED_AGENT_EMAILS = [
+  'sarah@realestate.com',
+  'james@realestate.com', 
+  'emily@realestate.com',
+]
 export const AdminAgents = () => {
   const [agents, setAgents] = useState<any[]>([])
   const { isAdmin, isAuthenticated } = useAuthStore()
@@ -68,6 +73,15 @@ export const AdminAgents = () => {
     avatarColors[name.charCodeAt(0) % avatarColors.length]
 
   const deleteAgent = async (id: string, name: string) => {
+    const agent = agents.find(a => a.id === id)
+    if (agent && PROTECTED_AGENT_EMAILS.includes(agent.email)) {
+      alert(
+        'This is a demo agent and cannot be deleted. ' +
+        'Only test agents added during demo can be removed.'
+      )
+      return
+    }
+
     const { count } = await supabase
       .from('properties')
       .select('*', { count: 'exact', head: true })
@@ -235,14 +249,17 @@ export const AdminAgents = () => {
               >
                 ✏️ Edit
               </button>
-              <button 
-                onClick={() => deleteAgent(agent.id, agent.name)}
-                className="bg-red-50 hover:bg-red-100 text-red-600 
-                border border-red-200 text-sm px-3 py-1.5 
-                rounded-xl transition-colors"
-              >
-                🗑️ Delete
-              </button>
+              {PROTECTED_AGENT_EMAILS.includes(agent.email) ? (
+                <span className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">
+                  🔒 Demo
+                </span>
+              ) : (
+                <button onClick={() => deleteAgent(agent.id, agent.name)}
+                  className="bg-red-50 hover:bg-red-100 text-red-600 
+                  border border-red-200 text-sm px-3 py-1.5 rounded-xl">
+                  🗑️ Delete
+                </button>
+              )}
             </div>
 
             <div className="flex flex-col items-center text-center">
