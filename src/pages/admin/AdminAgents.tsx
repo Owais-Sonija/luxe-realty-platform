@@ -67,8 +67,23 @@ export const AdminAgents = () => {
   const getColor = (name: string) =>
     avatarColors[name.charCodeAt(0) % avatarColors.length]
 
-  const deleteAgent = async (id: string) => {
-    if (!window.confirm('Delete this agent?')) return
+  const deleteAgent = async (id: string, name: string) => {
+    const { count } = await supabase
+      .from('properties')
+      .select('*', { count: 'exact', head: true })
+      .eq('agent_id', id)
+      .in('status', ['active', 'pending'])
+    
+    if (count && count > 0) {
+      alert(
+        `Cannot delete ${name}. ` +
+        `They have ${count} active properties. ` +
+        `Please reassign or remove their properties first.`
+      )
+      return
+    }
+    
+    if (!window.confirm(`Delete agent "${name}"?`)) return
     
     const { error } = await supabase
       .from('agents')
@@ -145,7 +160,23 @@ export const AdminAgents = () => {
   const [addError, setAddError] = useState('')
   const [addLoading, setAddLoading] = useState(false)
 
+  const checkAgentLimit = async () => {
+    const { count } = await supabase
+      .from('agents')
+      .select('*', { count: 'exact', head: true })
+    return count ?? 0
+  }
+
   const handleAddAgent = async () => {
+    const agentCount = await checkAgentLimit()
+    if (agentCount >= 10) {
+      setAddError(
+        'Agent limit reached (10 max on free tier). ' +
+        'Please delete an existing agent first.'
+      )
+      return
+    }
+
     if (!addForm.name.trim() || !addForm.email.trim()) {
       setAddError('Name and email are required')
       return
@@ -205,7 +236,7 @@ export const AdminAgents = () => {
                 ✏️ Edit
               </button>
               <button 
-                onClick={() => deleteAgent(agent.id)}
+                onClick={() => deleteAgent(agent.id, agent.name)}
                 className="bg-red-50 hover:bg-red-100 text-red-600 
                 border border-red-200 text-sm px-3 py-1.5 
                 rounded-xl transition-colors"

@@ -62,8 +62,31 @@ export const PropertyDetailPage = () => {
         })
       
 
-      
       if (error) throw error
+      
+      const cleanupInquiries = async () => {
+        const { count } = await supabase
+          .from('inquiries')
+          .select('*', { count: 'exact', head: true })
+        
+        if (count && count > 50) {
+          const { data: old } = await supabase
+            .from('inquiries')
+            .select('id')
+            .eq('status', 'closed')
+            .order('created_at', { ascending: true })
+            .limit(10)
+          
+          if (old && old.length > 0) {
+            await supabase
+              .from('inquiries')
+              .delete()
+              .in('id', old.map(i => i.id))
+          }
+        }
+      }
+      
+      await cleanupInquiries()
       
       setSubmitSuccess(true)
       setInquiryForm({ 

@@ -11,6 +11,11 @@ export const AdminDashboard = () => {
   })
   const [newInquiries, setNewInquiries] = useState(0)
   const [recentInquiries, setRecentInquiries] = useState<any[]>([])
+  const [resourceStats, setResourceStats] = useState({
+    propCount: 0,
+    agentCount: 0,
+    inquiryCount: 0
+  })
   const { isAdmin, isAuthenticated } = useAuthStore()
   const navigate = useNavigate()
 
@@ -73,6 +78,24 @@ export const AdminDashboard = () => {
           .limit(5)
         
         setRecentInquiries(recentInq ?? [])
+
+        const { count: propCount } = await supabase
+          .from('properties')
+          .select('*', { count: 'exact', head: true })
+
+        const { count: agentCount } = await supabase
+          .from('agents')
+          .select('*', { count: 'exact', head: true })
+
+        const { count: inquiryCountTotal } = await supabase
+          .from('inquiries')
+          .select('*', { count: 'exact', head: true })
+
+        setResourceStats({
+          propCount: propCount ?? 0,
+          agentCount: agentCount ?? 0,
+          inquiryCount: inquiryCountTotal ?? 0
+        })
 
       } catch (err) {
         if (import.meta.env.DEV) {
@@ -186,6 +209,68 @@ export const AdminDashboard = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+          <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+            📊 Resource Usage (Free Tier)
+          </h3>
+          <div className="space-y-3">
+            {[
+              { 
+                label: 'Properties', 
+                used: resourceStats.propCount, 
+                max: 20,
+                color: 'blue'
+              },
+              { 
+                label: 'Agents', 
+                used: resourceStats.agentCount, 
+                max: 10,
+                color: 'emerald'
+              },
+              { 
+                label: 'Inquiries', 
+                used: resourceStats.inquiryCount, 
+                max: 50,
+                color: 'violet'
+              },
+            ].map(item => {
+              const pct = Math.min(
+                Math.round(item.used / item.max * 100), 100
+              )
+              const isWarning = pct >= 80
+              const isFull = pct >= 100
+              return (
+                <div key={item.label}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-slate-600 font-medium">
+                      {item.label}
+                    </span>
+                    <span className={
+                      isFull ? 'text-red-600 font-bold' :
+                      isWarning ? 'text-amber-600 font-semibold' :
+                      'text-slate-500'
+                    }>
+                      {item.used}/{item.max}
+                      {isFull ? ' FULL' : 
+                       isWarning ? ' Almost full' : ''}
+                    </span>
+                  </div>
+                  <div className="h-2 bg-slate-100 rounded-full">
+                    <div 
+                      className={`h-2 rounded-full transition-all ${isFull ? 'bg-red-500' : isWarning ? 'bg-amber-500' : `bg-${item.color}-500`}`}
+                      style={{ width: pct + '%' }}
+                    />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          <p className="text-slate-400 text-xs mt-4">
+            Auto-cleanup runs when limits are reached.
+            Featured properties are protected from auto-deletion.
+          </p>
         </div>
       </div>
     </div>

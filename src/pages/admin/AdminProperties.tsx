@@ -5,6 +5,15 @@ import { supabase } from '../../lib/supabase'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store'
 
+const PROTECTED_PROPERTY_IDS = [
+  '9fd32451-a783-4180-9dcc-d334f900d02d',
+  'f4a4e600-b18d-4ab8-bc36-39fca1299cdd',
+  'd90a5038-561e-4617-b09b-00310bc867e8',
+  '132070ab-bb8b-4e0b-9618-7e7c68b18ceb',
+  '881d2d28-43ca-4dcd-b0ce-4e6f312909ad',
+  '47e16845-d83d-4a4a-bbf2-c9980bc5c316',
+]
+
 export const AdminProperties = () => {
   const [properties, setProperties] = useState<any[]>([])
   const [adminSearch, setAdminSearch] = useState('')
@@ -41,7 +50,23 @@ export const AdminProperties = () => {
 
   useEffect(() => { fetchProperties() }, [])
 
-  const deleteProperty = async (id: string, title: string) => {
+  const deleteProperty = async (id: string, title: string, isFeatured: boolean) => {
+    if (PROTECTED_PROPERTY_IDS.includes(id)) {
+      alert(
+        'This is a demo property and cannot be deleted. ' +
+        'Only test properties added during demo can be removed.'
+      )
+      return
+    }
+    
+    if (isFeatured) {
+      alert(
+        'Cannot delete featured properties. ' +
+        'Please unfeature it first.'
+      )
+      return
+    }
+
     if (!window.confirm(`Delete "${title}"? This cannot be undone.`)) 
       return
     
@@ -152,6 +177,30 @@ export const AdminProperties = () => {
     fetchAgents()
   }, [])
 
+  const checkAndCleanupProperties = async () => {
+    const { count } = await supabase
+      .from('properties')
+      .select('*', { count: 'exact', head: true })
+    
+    if (count && count >= 20) {
+      const { data: oldProps } = await supabase
+        .from('properties')
+        .select('id')
+        .eq('is_featured', false)
+        .not('id', 'in', `(${PROTECTED_PROPERTY_IDS.join(',')})`)
+        .order('created_at', { ascending: true })
+        .limit(5)
+      
+      if (oldProps && oldProps.length > 0) {
+        const ids = oldProps.map(p => p.id)
+        await supabase
+          .from('properties')
+          .delete()
+          .in('id', ids)
+      }
+    }
+  }
+
   const handleAddProperty = async () => {
     if (!addForm.title || !addForm.price || !addForm.address || !addForm.city) {
       setAddError('Title, price, address and city required')
@@ -159,6 +208,9 @@ export const AdminProperties = () => {
     }
     setAddLoading(true)
     setAddError('')
+    
+    await checkAndCleanupProperties()
+    
     setUploadingImages(true)
     
     const finalImages = await uploadImagesToSupabase()
@@ -335,11 +387,16 @@ export const AdminProperties = () => {
                           : 'bg-slate-50 text-slate-500 border-slate-200'}`}>
                         {prop.is_featured ? '★ Featured' : '☆ Feature'}
                       </button>
-                      <button onClick={() => deleteProperty(prop.id, prop.title)}
-                        className="text-xs px-2 py-1 rounded-lg bg-red-50 
-                        text-red-600 border border-red-200">
-                        Delete
-                      </button>
+                      {PROTECTED_PROPERTY_IDS.includes(prop.id) ? (
+                        <span className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">
+                          🔒 Demo
+                        </span>
+                      ) : (
+                        <button onClick={() => deleteProperty(prop.id, prop.title, prop.is_featured)}
+                          className="text-xs px-2 py-1 rounded-lg bg-red-50 text-red-600 border border-red-200">
+                          Delete
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -354,6 +411,13 @@ export const AdminProperties = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-2xl shadow-2xl overflow-y-auto max-h-[85vh]">
             <h3 className="text-lg font-bold mb-4">Add New Property</h3>
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4">
+              <p className="text-blue-700 text-xs">
+                ℹ️ Free tier: 20 properties maximum. 
+                Demo properties are protected. 
+                Test entries will be auto-cleaned when limit is reached.
+              </p>
+            </div>
             {addError && (
               <div className="bg-red-50 text-red-600 border border-red-200 rounded-xl p-3 text-sm mb-4">
                 {addError}
