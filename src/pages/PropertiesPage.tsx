@@ -6,6 +6,7 @@ import { PropertyCard } from '../components/PropertyCard'
 import { PropertyMap } from '../components/PropertyMap'
 import { PROPERTY_FEATURES } from '../types'
 import type { Property } from '../types'
+import { Footer } from '../components/Footer'
 
 export const PropertiesPage = () => {
   const [localFilters, setLocalFilters] = useState({
@@ -484,6 +485,7 @@ export const PropertiesPage = () => {
               <PropertyMap properties={properties} />
             </div>
           )}
+          <Footer />
         </div>
       </main>
     </div>

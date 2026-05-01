@@ -7,6 +7,7 @@ import { formatPrice, getTypeColor } from '../utils/format'
 import type { Property } from '../types'
 import { useStore } from '../store'
 import { supabase } from '../lib/supabase'
+import { Footer } from '../components/Footer'
 
 export const PropertyDetailPage = () => {
   const { id } = useParams()
@@ -340,6 +341,7 @@ export const PropertyDetailPage = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   )
 }

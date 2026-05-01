@@ -5,6 +5,7 @@ import { useStore } from '../store'
 import { PropertyCard } from '../components/PropertyCard'
 import type { Property } from '../types'
 import { supabase } from '../lib/supabase'
+import { Footer } from '../components/Footer'
 
 export const FavoritesPage = () => {
   const { favorites } = useStore()
@@ -79,6 +80,7 @@ export const FavoritesPage = () => {
           </>
         )}
       </div>
+      <Footer />
     </div>
   )
 }

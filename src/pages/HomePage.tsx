@@ -6,6 +6,7 @@ import { MortgageCalculator } from '../components/MortgageCalculator'
 import type { Property } from '../types'
 import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
+import { Footer } from '../components/Footer'
 
 const propertyTypes = [
   { type: 'house', label: 'Houses', emoji: '🏠' },
@@ -190,6 +191,7 @@ export const HomePage = () => {
           </div>
         </div>
       </section>
+      <Footer />
     </div>
   )
 }

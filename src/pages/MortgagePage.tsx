@@ -1,5 +1,6 @@
 import { MortgageCalculator } from '../components/MortgageCalculator'
 import { FileText, Percent, HelpCircle, CheckCircle } from 'lucide-react'
+import { Footer } from '../components/Footer'
 
 export const MortgagePage = () => {
   return (
@@ -81,6 +82,7 @@ export const MortgagePage = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   )
 }

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import type { Agent, Property } from '../types'
 import { PropertyCard } from '../components/PropertyCard'
+import { Footer } from '../components/Footer'
 
 export default function AgentDetailPage() {
   const getInitials = (name: string) => 
@@ -151,6 +152,7 @@ export default function AgentDetailPage() {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   )
 }

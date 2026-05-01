@@ -3,6 +3,7 @@ import { Award, CheckCircle2 } from 'lucide-react'
 import type { Agent } from '../types'
 import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
+import { Footer } from '../components/Footer'
 
 export const AgentsPage = () => {
   const getInitials = (name: string) => 
@@ -126,6 +127,7 @@ export const AgentsPage = () => {
           ))}
         </div>
       </div>
+      <Footer />
     </div>
   )
 }
